@@ -107,5 +107,5 @@ http://127.0.0.1:5000
 
 ## 👨‍💻 Author
 
-Developed by: **Your Name**
+Developed by: **Sherjama**
 Project Type: College Final Year Project
