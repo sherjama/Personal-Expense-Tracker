@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h2>Edit Transaction</h2>
+
+<form method="POST">
+
+    <select name="type" class="form-control mb-3">
+        <option {% if t.type=='Income' %}selected{% endif %}>Income</option>
+        <option {% if t.type=='Expense' %}selected{% endif %}>Expense</option>
+    </select>
+
+    <input type="text" name="category" value="{{ t.category }}" class="form-control mb-3">
+
+    <input type="number" name="amount" value="{{ t.amount }}" class="form-control mb-3">
+
+    <input type="text" name="description" value="{{ t.description }}" class="form-control mb-3">
+
+    <button class="btn btn-success">Update</button>
+
+</form>
+
+{% endblock %}

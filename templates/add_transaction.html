@@ -1,0 +1,479 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+  /* ── Page layout ── */
+  .form-page {
+    max-width: 560px;
+    margin: 0 auto;
+    animation: fadeUp 0.45s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .form-page-header {
+    margin-bottom: 32px;
+  }
+
+  .form-page-header h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 900;
+    font-size: 2rem;
+    letter-spacing: -0.04em;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .form-page-header p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 7px;
+  }
+
+  /* ── Card ── */
+  .form-card {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.35);
+  }
+
+  /* ── Type Toggle ── */
+  .type-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .type-toggle input[type="radio"] { display: none; }
+
+  .type-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    background: transparent;
+    transition: all 0.18s ease;
+    user-select: none;
+  }
+
+  .type-label:hover {
+    border-color: var(--border-lit);
+    color: var(--text);
+    background: rgba(255,255,255,0.03);
+  }
+
+  /* Income selected */
+  input#type-income:checked ~ .type-toggle .label-income,
+  .label-income.active {
+    border-color: #4caf7d;
+    background: rgba(76,175,125,0.1);
+    color: #4caf7d;
+  }
+
+  input[type="radio"]#type-income:checked + .label-income {
+    border-color: #4caf7d;
+    background: rgba(76,175,125,0.1);
+    color: #4caf7d;
+  }
+
+  input[type="radio"]#type-expense:checked + .label-expense {
+    border-color: #e05252;
+    background: rgba(224,82,82,0.1);
+    color: #e05252;
+  }
+
+  /* ── Section label ── */
+  .field-label {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .field-group { margin-bottom: 22px; }
+
+  /* ── Category Grid ── */
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .cat-input { display: none; }
+
+  .cat-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 10px 6px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+    transition: all 0.16s ease;
+    user-select: none;
+  }
+
+  .cat-label:hover {
+    border-color: var(--border-lit);
+    background: rgba(255,255,255,0.03);
+  }
+
+  .cat-label .cat-emoji {
+    font-size: 1.3rem;
+    line-height: 1;
+  }
+
+  .cat-label .cat-name {
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: var(--text-dim);
+    text-align: center;
+    letter-spacing: 0.01em;
+  }
+
+  .cat-input:checked + .cat-label {
+    border-color: var(--accent);
+    background: rgba(201,242,100,0.08);
+  }
+
+  .cat-input:checked + .cat-label .cat-name {
+    color: var(--accent);
+  }
+
+  /* Hidden fallback category input */
+  .cat-custom-wrap {
+    margin-top: 10px;
+    position: relative;
+  }
+
+  /* ── Text Inputs ── */
+  .field-input {
+    width: 100%;
+    background: #111113;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 16px;
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 0.92rem;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.18s, box-shadow 0.18s;
+    appearance: none;
+  }
+
+  .field-input::placeholder { color: var(--text-muted); }
+
+  .field-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(201,242,100,0.1);
+  }
+
+  /* Amount input with ₹ prefix */
+  .amount-wrap {
+    position: relative;
+  }
+
+  .amount-prefix {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+
+  .amount-wrap .field-input {
+    padding-left: 36px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── Submit Button ── */
+  .submit-btn {
+    width: 100%;
+    padding: 15px;
+    background: var(--accent);
+    color: #0e0e0f;
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    letter-spacing: 0.01em;
+    transition: background 0.18s, transform 0.15s, box-shadow 0.18s;
+    box-shadow: 0 4px 20px rgba(201,242,100,0.15);
+    margin-top: 8px;
+  }
+
+  .submit-btn:hover {
+    background: #d8ff70;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(201,242,100,0.25);
+  }
+
+  .submit-btn:active {
+    transform: translateY(0);
+  }
+
+  /* ── Divider ── */
+  .form-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 24px 0;
+  }
+</style>
+
+<div class="form-page">
+
+  <div class="form-page-header">
+    <h2>Add Transaction</h2>
+    <p>Record income or expense</p>
+  </div>
+
+  <div class="form-card">
+    <form method="POST" id="txn-form">
+
+      <!-- ── Type Toggle ── -->
+      <div class="field-group">
+        <span class="field-label">Transaction Type</span>
+        <div class="type-toggle">
+
+          <input type="radio" name="type" id="type-income" value="Income" checked>
+          <label class="type-label label-income" for="type-income">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            Income
+          </label>
+
+          <input type="radio" name="type" id="type-expense" value="Expense">
+          <label class="type-label label-expense" for="type-expense">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+            Expense
+          </label>
+
+        </div>
+      </div>
+
+      <hr class="form-divider">
+
+      <!-- ── Income Categories ── -->
+      <div class="field-group" id="income-cats">
+        <span class="field-label">Category</span>
+        <div class="category-grid">
+          <input type="radio" class="cat-input" name="category" id="cat-salary"     value="Salary">
+          <label class="cat-label" for="cat-salary">
+            <span class="cat-emoji">💼</span><span class="cat-name">Salary</span>
+          </label>
+
+          <input type="radio" class="cat-input" name="category" id="cat-freelance"  value="Freelance">
+          <label class="cat-label" for="cat-freelance">
+            <span class="cat-emoji">🧑‍💻</span><span class="cat-name">Freelance</span>
+          </label>
+
+          <input type="radio" class="cat-input" name="category" id="cat-business"   value="Business">
+          <label class="cat-label" for="cat-business">
+            <span class="cat-emoji">🏪</span><span class="cat-name">Business</span>
+          </label>
+
+          <input type="radio" class="cat-input" name="category" id="cat-invest"     value="Investment">
+          <label class="cat-label" for="cat-invest">
+            <span class="cat-emoji">📈</span><span class="cat-name">Investment</span>
+          </label>
+
+          <input type="radio" class="cat-input" name="category" id="cat-rental"     value="Rental">
+          <label class="cat-label" for="cat-rental">
+            <span class="cat-emoji">🏠</span><span class="cat-name">Rental</span>
+          </label>
+
+          <input type="radio" class="cat-input" name="category" id="cat-bonus"      value="Bonus">
+          <label class="cat-label" for="cat-bonus">
+            <span class="cat-emoji">🎁</span><span class="cat-name">Bonus</span>
+          </label>
+
+          <input type="radio" class="cat-input" name="category" id="cat-refund"     value="Refund">
+          <label class="cat-label" for="cat-refund">
+            <span class="cat-emoji">↩️</span><span class="cat-name">Refund</span>
+          </label>
+
+          <input type="radio" class="cat-input" name="category" id="cat-inc-other"  value="Other">
+          <label class="cat-label" for="cat-inc-other">
+            <span class="cat-emoji">➕</span><span class="cat-name">Other</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- ── Expense Categories ── -->
+      <div class="field-group" id="expense-cats" style="display:none;">
+        <span class="field-label">Category</span>
+        <div class="category-grid">
+          <input type="radio" class="cat-input" name="category" id="cat-food"       value="Food">
+          <label class="cat-label" for="cat-food">
+            <span class="cat-emoji">🍽️</span><span class="cat-name">Food</span>
+          </label>
+
+          <input type="radio" class="cat-input" name="category" id="cat-transport"  value="Transport">
+          <label class="cat-label" for="cat-transport">
+            <span class="cat-emoji">🚗</span><span class="cat-name">Transport</span>
+          </label>
+
+          <input type="radio" class="cat-input" name="category" id="cat-shopping"   value="Shopping">
+          <label class="cat-label" for="cat-shopping">
+            <span class="cat-emoji">🛍️</span><span class="cat-name">Shopping</span>
+          </label>
+
+          <input type="radio" class="cat-input" name="category" id="cat-health"     value="Health">
+          <label class="cat-label" for="cat-health">
+            <span class="cat-emoji">💊</span><span class="cat-name">Health</span>
+          </label>
+
+          <input type="radio" class="cat-input" name="category" id="cat-rent"       value="Rent">
+          <label class="cat-label" for="cat-rent">
+            <span class="cat-emoji">🏠</span><span class="cat-name">Rent</span>
+          </label>
+
+          <input type="radio" class="cat-input" name="category" id="cat-edu"        value="Education">
+          <label class="cat-label" for="cat-edu">
+            <span class="cat-emoji">📚</span><span class="cat-name">Education</span>
+          </label>
+
+          <input type="radio" class="cat-input" name="category" id="cat-entertain"  value="Entertainment">
+          <label class="cat-label" for="cat-entertain">
+            <span class="cat-emoji">🎬</span><span class="cat-name">Fun</span>
+          </label>
+
+          <input type="radio" class="cat-input" name="category" id="cat-bills"      value="Bills">
+          <label class="cat-label" for="cat-bills">
+            <span class="cat-emoji">⚡</span><span class="cat-name">Bills</span>
+          </label>
+
+          <input type="radio" class="cat-input" name="category" id="cat-groceries"  value="Groceries">
+          <label class="cat-label" for="cat-groceries">
+            <span class="cat-emoji">🛒</span><span class="cat-name">Groceries</span>
+          </label>
+
+          <input type="radio" class="cat-input" name="category" id="cat-travel"     value="Travel">
+          <label class="cat-label" for="cat-travel">
+            <span class="cat-emoji">✈️</span><span class="cat-name">Travel</span>
+          </label>
+
+          <input type="radio" class="cat-input" name="category" id="cat-fitness"    value="Fitness">
+          <label class="cat-label" for="cat-fitness">
+            <span class="cat-emoji">🏋️</span><span class="cat-name">Fitness</span>
+          </label>
+
+          <input type="radio" class="cat-input" name="category" id="cat-exp-other"  value="Other">
+          <label class="cat-label" for="cat-exp-other">
+            <span class="cat-emoji">➕</span><span class="cat-name">Other</span>
+          </label>
+        </div>
+      </div>
+
+      <hr class="form-divider">
+
+      <!-- ── Amount ── -->
+      <div class="field-group">
+        <label class="field-label" for="amount">Amount</label>
+        <div class="amount-wrap">
+          <span class="amount-prefix">₹</span>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            name="amount"
+            id="amount"
+            class="field-input"
+            placeholder="0.00"
+            required
+          >
+        </div>
+      </div>
+
+      <!-- ── Description ── -->
+      <div class="field-group">
+        <label class="field-label" for="description">Description <span style="color:var(--text-muted);font-size:0.65rem;">(optional)</span></label>
+        <input
+          type="text"
+          name="description"
+          id="description"
+          class="field-input"
+          placeholder="e.g. Monthly salary, Lunch at office…"
+        >
+      </div>
+
+      <!-- ── Date ── -->
+      <div class="field-group">
+        <label class="field-label" for="date">Date</label>
+        <input
+          type="date"
+          name="date"
+          id="date"
+          class="field-input"
+          required
+        >
+      </div>
+
+      <!-- ── Submit ── -->
+      <button type="submit" class="submit-btn">
+        Save Transaction
+      </button>
+
+    </form>
+  </div>
+
+</div>
+
+<script>
+  // Set today's date as default
+  document.getElementById('date').valueAsDate = new Date();
+
+  // Switch category grids based on type selection
+  const incomeRadio  = document.getElementById('type-income');
+  const expenseRadio = document.getElementById('type-expense');
+  const incomeCats   = document.getElementById('income-cats');
+  const expenseCats  = document.getElementById('expense-cats');
+
+  function switchCats() {
+    if (incomeRadio.checked) {
+      incomeCats.style.display  = '';
+      expenseCats.style.display = 'none';
+      // Uncheck expense cats
+      expenseCats.querySelectorAll('.cat-input').forEach(r => r.checked = false);
+    } else {
+      incomeCats.style.display  = 'none';
+      expenseCats.style.display = '';
+      incomeCats.querySelectorAll('.cat-input').forEach(r => r.checked = false);
+    }
+  }
+
+  incomeRadio.addEventListener('change', switchCats);
+  expenseRadio.addEventListener('change', switchCats);
+</script>
+
+{% endblock %}

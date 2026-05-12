@@ -1,0 +1,506 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap');
+
+  :root {
+    --ink: #0d0d0d;
+    --ink-soft: #3a3a3a;
+    --ink-muted: #7a7a7a;
+    --surface: #f5f4f0;
+    --surface-card: #ffffff;
+    --surface-hover: #f0ede6;
+    --income-bg: #e8f5e9;
+    --income-accent: #1b7a3e;
+    --income-glow: #4caf7d;
+    --expense-bg: #fce8e8;
+    --expense-accent: #b91c1c;
+    --expense-glow: #f87171;
+    --balance-bg: #e8eeff;
+    --balance-accent: #1e40af;
+    --balance-glow: #6080f0;
+    --border: #e2ddd5;
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+    --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+    --shadow-lg: 0 20px 60px rgba(0,0,0,0.1);
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body, .dashboard-wrapper {
+    font-family: 'Syne', sans-serif;
+    background: var(--surface);
+    color: var(--ink);
+  }
+
+  .dashboard-wrapper {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Header ── */
+  .dash-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 36px;
+    padding-bottom: 24px;
+    border-bottom: 1.5px solid var(--border);
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .dash-title-group h2 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    line-height: 1;
+  }
+
+  .dash-title-group p {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--ink-muted);
+    margin-top: 6px;
+    letter-spacing: 0.04em;
+  }
+
+  .dash-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  /* ── Buttons ── */
+  .btn-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--ink);
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 11px 22px;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    letter-spacing: 0.01em;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s;
+    box-shadow: 0 2px 0 #000, var(--shadow-sm);
+  }
+  .btn-add:hover {
+    background: #222;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 #000, var(--shadow-md);
+  }
+  .btn-add:active { transform: translateY(0); box-shadow: 0 1px 0 #000; }
+
+  .btn-pdf {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--income-accent);
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 11px 22px;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    letter-spacing: 0.01em;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s;
+    box-shadow: 0 2px 0 #145a2d, var(--shadow-sm);
+  }
+  .btn-pdf:hover {
+    filter: brightness(1.12);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 #145a2d, var(--shadow-md);
+  }
+
+  /* ── Stat Cards ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-bottom: 32px;
+  }
+
+  @media (max-width: 700px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .dash-header { flex-direction: column; align-items: flex-start; }
+  }
+
+  .stat-card {
+    border-radius: var(--radius);
+    padding: 28px 26px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+    border: 1.5px solid transparent;
+    animation: fadeUp 0.5s ease both;
+  }
+  .stat-card:nth-child(1) { animation-delay: 0.05s; }
+  .stat-card:nth-child(2) { animation-delay: 0.1s; }
+  .stat-card:nth-child(3) { animation-delay: 0.15s; }
+
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .stat-card.income {
+    background: var(--income-bg);
+    border-color: #b5dfc3;
+  }
+  .stat-card.expense {
+    background: var(--expense-bg);
+    border-color: #f5bcbc;
+  }
+  .stat-card.balance {
+    background: var(--balance-bg);
+    border-color: #bdc9f8;
+  }
+
+  .stat-card .card-orb {
+    position: absolute;
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    opacity: 0.18;
+    right: -20px;
+    top: -20px;
+  }
+  .income .card-orb   { background: var(--income-glow); }
+  .expense .card-orb  { background: var(--expense-glow); }
+  .balance .card-orb  { background: var(--balance-glow); }
+
+  .stat-card .card-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .income .card-label  { color: var(--income-accent); }
+  .expense .card-label { color: var(--expense-accent); }
+  .balance .card-label { color: var(--balance-accent); }
+
+  .stat-card .card-icon {
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .stat-card .card-amount {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+  .income .card-amount  { color: var(--income-accent); }
+  .expense .card-amount { color: var(--expense-accent); }
+  .balance .card-amount { color: var(--balance-accent); }
+
+  .stat-card .card-currency {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-right: 2px;
+    vertical-align: super;
+    opacity: 0.7;
+  }
+
+  /* ── Search ── */
+  .search-wrap {
+    position: relative;
+    margin-bottom: 24px;
+  }
+
+  .search-wrap svg {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ink-muted);
+    pointer-events: none;
+  }
+
+  .search-wrap input {
+    width: 100%;
+    padding: 13px 18px 13px 44px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.88rem;
+    background: var(--surface-card);
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-shadow: var(--shadow-sm);
+  }
+  .search-wrap input:focus {
+    border-color: var(--balance-glow);
+    box-shadow: 0 0 0 3px rgba(96,128,240,0.12), var(--shadow-sm);
+  }
+  .search-wrap input::placeholder { color: var(--ink-muted); }
+
+  /* ── Table ── */
+  .table-card {
+    background: var(--surface-card);
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    animation: fadeUp 0.5s 0.2s ease both;
+  }
+
+  .table-scroll { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead tr {
+    background: var(--ink);
+    color: #fff;
+  }
+
+  thead th {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 14px 18px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface-hover); }
+
+  tbody td {
+    padding: 14px 18px;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    vertical-align: middle;
+  }
+
+  /* Type badge */
+  .type-badge {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 99px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .type-income  { background: var(--income-bg);  color: var(--income-accent); }
+  .type-expense { background: var(--expense-bg); color: var(--expense-accent); }
+
+  /* Amount */
+  td.amount-income  { color: var(--income-accent);  font-weight: 700; font-family: 'DM Mono', monospace; }
+  td.amount-expense { color: var(--expense-accent); font-weight: 700; font-family: 'DM Mono', monospace; }
+
+  /* Date */
+  td.date-cell {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--ink-muted);
+  }
+
+  /* Action buttons */
+  .btn-delete, .btn-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.76rem;
+    font-weight: 600;
+    padding: 6px 13px;
+    border-radius: 8px;
+    text-decoration: none;
+    letter-spacing: 0.01em;
+    transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+  }
+  .btn-delete {
+    background: var(--expense-bg);
+    color: var(--expense-accent);
+    border: 1px solid #f5bcbc;
+  }
+  .btn-delete:hover {
+    background: var(--expense-accent);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(185,28,28,0.2);
+  }
+  .btn-edit {
+    background: #fffbe6;
+    color: #92610a;
+    border: 1px solid #f0d88a;
+    margin-left: 6px;
+  }
+  .btn-edit:hover {
+    background: #f59e0b;
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(245,158,11,0.25);
+  }
+
+  /* Empty state */
+  .empty-row td {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--ink-muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.88rem;
+  }
+
+  /* Category pill */
+  .category-pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px 9px;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    font-family: 'DM Mono', monospace;
+  }
+</style>
+
+<div class="dashboard-wrapper">
+
+  <!-- Header -->
+  <div class="dash-header">
+    <div class="dash-title-group">
+      <h2>Dashboard</h2>
+      <p>PERSONAL FINANCE TRACKER</p>
+    </div>
+    <div class="dash-actions">
+      <a href="{{ url_for('add_transaction') }}" class="btn-add">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Transaction
+      </a>
+      <a href="{{ url_for('download_pdf') }}" class="btn-pdf">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download PDF
+      </a>
+    </div>
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="stats-grid">
+
+    <div class="stat-card income">
+      <div class="card-orb"></div>
+      <span class="card-label">Total Income</span>
+      <div class="card-amount">
+        <span class="card-currency">₹</span>{{ income }}
+      </div>
+    </div>
+
+    <div class="stat-card expense">
+      <div class="card-orb"></div>
+      <span class="card-label">Total Expense</span>
+      <div class="card-amount">
+        <span class="card-currency">₹</span>{{ expense }}
+      </div>
+    </div>
+
+    <div class="stat-card balance">
+      <div class="card-orb"></div>
+      <span class="card-label">Balance</span>
+      <div class="card-amount">
+        <span class="card-currency">₹</span>{{ balance }}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Search -->
+  <form method="GET" action="{{ url_for('search') }}" class="search-wrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" name="q" placeholder="Search by category, description, type…">
+  </form>
+
+  <!-- Table -->
+  <div class="table-card">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Category</th>
+            <th>Amount</th>
+            <th>Description</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          {% for t in transactions %}
+          <tr>
+
+            <td>
+              <span class="type-badge {% if t.type|lower == 'income' %}type-income{% else %}type-expense{% endif %}">
+                {{ t.type }}
+              </span>
+            </td>
+
+            <td><span class="category-pill">{{ t.category }}</span></td>
+
+            <td class="{% if t.type|lower == 'income' %}amount-income{% else %}amount-expense{% endif %}">
+              ₹ {{ t.amount }}
+            </td>
+
+            <td>{{ t.description }}</td>
+
+            <td class="date-cell">{{ t.date.strftime('%d-%m-%Y') }}</td>
+
+            <td>
+              <a href="{{ url_for('delete_transaction', id=t.id) }}" class="btn-delete">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                Delete
+              </a>
+              <a href="{{ url_for('edit_transaction', id=t.id) }}" class="btn-edit">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Edit
+              </a>
+            </td>
+
+          </tr>
+          {% else %}
+          <tr class="empty-row">
+            <td colspan="6">— No transactions found —</td>
+          </tr>
+          {% endfor %}
+
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
+```

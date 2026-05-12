@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h2>Expense Analytics</h2>
+
+{% if chart %}
+
+    <div class="text-center">
+        <img src="{{ chart }}" class="img-fluid" style="max-width:500px;">
+        <img src="{{ bar }}" class="img-fluid" style="max-width:500px;">
+    </div>
+
+{% else %}
+
+    <div class="alert alert-warning">
+        No expense data available for analytics.
+    </div>
+
+{% endif %}
+
+{% endblock %}
