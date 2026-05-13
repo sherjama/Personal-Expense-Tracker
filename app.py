@@ -1,6 +1,9 @@
 import matplotlib
 matplotlib.use('Agg')
 
+import pymysql
+pymysql.install_as_MySQLdb()
+
 from flask import Flask, render_template, redirect, url_for
 from flask import request, flash
 from flask import make_response
